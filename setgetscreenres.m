@@ -7,33 +7,36 @@
 
 #include <ApplicationServices/ApplicationServices.h>
 
-bool MyDisplaySwitchToMode (CGDirectDisplayID display, CFDictionaryRef mode);
+bool changeMode (CGDirectDisplayID display, CFDictionaryRef mode);
 
 int main (int argc, const char * argv[])
 {
     int h;                          // horizontal resolution
     int v;                          // vertical resolution
     CFDictionaryRef switchMode;     // mode to switch to
-    CGDirectDisplayID mainDisplay;  // ID of main display
+    CGDirectDisplayID mainDisplay = CGMainDisplayID();  // ID of main display
 
-    CFDictionaryRef CGDisplayCurrentMode(CGDirectDisplayID display);
+//    CFDictionaryRef CGDisplayCurrentMode(CGDirectDisplayID display);
+
+    
 
     if (argc == 1) {
-        CGRect screenFrame = CGDisplayBounds(kCGDirectMainDisplay);
-        CGSize screenSize  = screenFrame.size;
-        printf("%d %d\n", screenSize.width, screenSize.height);
+        CGDisplayModeRef currentMode = CGDisplayCopyDisplayMode(mainDisplay);
+//        CGRect screenFrame = CGDisplayBounds(kCGDirectMainDisplay);
+//        CGSize screenSize  = screenFrame.size;
+        size_t width = CGDisplayModeGetWidth(currentMode);
+        size_t height = CGDisplayModeGetHeight(currentMode);
+        printf("%zu %zu\n", width, height);
         return 0;
     }
     if (argc != 3 || !(h = atoi(argv[1])) || !(v = atoi(argv[2])) ) {
-        fprintf(stderr, "ERROR: Use %s horres vertres\n", argv[0]);
+        fprintf(stderr, "Usage: %s horizontal vertical\n", argv[0]);
         return -1;
     }
 
-    mainDisplay = CGMainDisplayID();
-
     switchMode = CGDisplayBestModeForParameters(mainDisplay, 32, h, v, NULL);
 
-    if (! MyDisplaySwitchToMode(mainDisplay, switchMode)) {
+    if (! changeMode(mainDisplay, switchMode)) {
         fprintf(stderr, "Error changing resolution to %d %d\n", h, v);
         return 1;
     }
@@ -41,11 +44,13 @@ int main (int argc, const char * argv[])
     return 0;
 }
 
-bool MyDisplaySwitchToMode (CGDirectDisplayID display, CFDictionaryRef mode)
+bool changeMode (CGDirectDisplayID display, CFDictionaryRef mode)
 {
     CGDisplayConfigRef config;
     if (CGBeginDisplayConfiguration(&config) == kCGErrorSuccess) {
-        CGConfigureDisplayMode(config, display, mode);
+        CGConfigureDisplayWithDisplayMode(config, display, mode, NULL);
+        // old
+        // CGConfigureDisplayMode(config, display, mode);
         CGCompleteDisplayConfiguration(config, kCGConfigureForSession );
         return true;
     }
