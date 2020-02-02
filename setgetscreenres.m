@@ -29,7 +29,7 @@ int main (int argc, const char * argv[])
     }
         
     
-    if (argc != 3 || !(newModeId = atoi(argv[1]))) {
+    if (argc != 2 || !(newModeId = atoi(argv[1]))) {
         fprintf(stderr, "\nUsage: %s <modeId>\n", argv[0]);
         fprintf(stderr, "Pick a mode ID number from the list of available modes printed above.\n");
         return -1;
