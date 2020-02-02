@@ -2,7 +2,7 @@
  * COMPILE:
  *    c++ setgetscreenres.m -framework ApplicationServices -o setgetscreenres
  * USE:
- *    setgetscreenres 1440 900
+ *    setgetscreenres <modeId>
  */
 
 #include <ApplicationServices/ApplicationServices.h>
@@ -23,7 +23,7 @@ int main (int argc, const char * argv[])
         printMode(currentMode);
         CGDisplayModeRelease(currentMode);
         
-        printf("\nAvailable modes are: \n");
+        printf("\n\nAvailable modes are: \n");
         printAllModes(mainDisplay);
         
     }
@@ -73,8 +73,8 @@ void printAllModes(CGDirectDisplayID display){
     
     for(int i = 0; i < CFArrayGetCount(allModes); i++){
         CGDisplayModeRef mode = CFArrayGetValueAtIndex(allModes, i);
-        printf("modeId: %d, resolution: ", i);
         printMode(mode);
+        printf("\t modeId %d\n", i);
         CGDisplayModeRelease(mode);
     }
 
@@ -85,5 +85,5 @@ void printMode(CGDisplayModeRef mode){
     size_t width = CGDisplayModeGetWidth(mode);
     size_t height = CGDisplayModeGetHeight(mode);
     double refreshRate = CGDisplayModeGetRefreshRate(mode);
-    printf("%zu x %zu @ %f hz\n", width, height, refreshRate);
+    printf("%zu x %zu @ %f hz", width, height, refreshRate);
 }
