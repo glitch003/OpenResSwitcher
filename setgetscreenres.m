@@ -7,48 +7,58 @@
 
 #include <ApplicationServices/ApplicationServices.h>
 
-bool changeMode (CGDirectDisplayID display, CFDictionaryRef mode);
+bool changeMode (CGDirectDisplayID display, int newModeId);
+void printMode (CGDisplayModeRef mode);
+void printAllModes (CGDirectDisplayID display);
 
 int main (int argc, const char * argv[])
 {
-    int h;                          // horizontal resolution
-    int v;                          // vertical resolution
-    CFDictionaryRef switchMode;     // mode to switch to
-    CGDirectDisplayID mainDisplay = CGMainDisplayID();  // ID of main display
-
-//    CFDictionaryRef CGDisplayCurrentMode(CGDirectDisplayID display);
-
+    int newModeId;                          // possible modeId
     
-
-    if (argc == 1) {
+    CGDirectDisplayID mainDisplay = CGMainDisplayID();  // ID of main display
+    
+    if (argc == 1){
         CGDisplayModeRef currentMode = CGDisplayCopyDisplayMode(mainDisplay);
-//        CGRect screenFrame = CGDisplayBounds(kCGDirectMainDisplay);
-//        CGSize screenSize  = screenFrame.size;
-        size_t width = CGDisplayModeGetWidth(currentMode);
-        size_t height = CGDisplayModeGetHeight(currentMode);
-        printf("%zu %zu\n", width, height);
-        return 0;
+        printf("Current resolution is ");
+        printMode(currentMode);
+        CGDisplayModeRelease(currentMode);
+        
+        printf("\nAvailable modes are: \n");
+        printAllModes(mainDisplay);
+        
     }
-    if (argc != 3 || !(h = atoi(argv[1])) || !(v = atoi(argv[2])) ) {
-        fprintf(stderr, "Usage: %s horizontal vertical\n", argv[0]);
+        
+    
+    if (argc != 3 || !(newModeId = atoi(argv[1]))) {
+        fprintf(stderr, "\nUsage: %s <modeId>\n", argv[0]);
+        fprintf(stderr, "Pick a mode ID number from the list of available modes printed above.\n");
         return -1;
     }
-
-    switchMode = CGDisplayBestModeForParameters(mainDisplay, 32, h, v, NULL);
-
-    if (! changeMode(mainDisplay, switchMode)) {
-        fprintf(stderr, "Error changing resolution to %d %d\n", h, v);
+    
+    
+    
+    if (! changeMode(mainDisplay, newModeId)) {
+        fprintf(stderr, "Error changing resolution\n");
         return 1;
     }
 
     return 0;
 }
 
-bool changeMode (CGDirectDisplayID display, CFDictionaryRef mode)
+bool changeMode (CGDirectDisplayID display, int newModeId)
 {
+    // get mode to switch to
+    CFArrayRef allModes = CGDisplayCopyAllDisplayModes(display, NULL);
+    if (newModeId < 0 || newModeId > CFArrayGetCount(allModes) - 1){
+        printf("Enter a valid modeId\n");
+        return false;
+    }
+    
+    CGDisplayModeRef newMode = CFArrayGetValueAtIndex(allModes, newModeId);
+    
     CGDisplayConfigRef config;
     if (CGBeginDisplayConfiguration(&config) == kCGErrorSuccess) {
-        CGConfigureDisplayWithDisplayMode(config, display, mode, NULL);
+        CGConfigureDisplayWithDisplayMode(config, display, newMode, NULL);
         // old
         // CGConfigureDisplayMode(config, display, mode);
         CGCompleteDisplayConfiguration(config, kCGConfigureForSession );
@@ -57,3 +67,23 @@ bool changeMode (CGDirectDisplayID display, CFDictionaryRef mode)
     return false;
 }
 
+
+void printAllModes(CGDirectDisplayID display){
+    CFArrayRef allModes = CGDisplayCopyAllDisplayModes(display, NULL);
+    
+    for(int i = 0; i < CFArrayGetCount(allModes); i++){
+        CGDisplayModeRef mode = CFArrayGetValueAtIndex(allModes, i);
+        printf("modeId: %d, resolution: ", i);
+        printMode(mode);
+        CGDisplayModeRelease(mode);
+    }
+
+}
+
+
+void printMode(CGDisplayModeRef mode){
+    size_t width = CGDisplayModeGetWidth(mode);
+    size_t height = CGDisplayModeGetHeight(mode);
+    double refreshRate = CGDisplayModeGetRefreshRate(mode);
+    printf("%zu x %zu @ %f hz\n", width, height, refreshRate);
+}
